@@ -1,0 +1,1 @@
+add_subdirectory_ifdef(CONFIG_ST_VL53L8CX vl53l8cx)

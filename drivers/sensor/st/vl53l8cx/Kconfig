@@ -1,0 +1,62 @@
+config ST_VL53L8CX
+	bool "st VL53L8CX sensor"
+	default y
+	depends on DT_HAS_ST_VL53L8CX_ENABLED
+	select I2C
+	help
+	  Enable VL53L8CX driver
+
+choice ST_VL53L8CX_RESOLUTION
+	prompt "VL53L8CX resolution"
+	default ST_VL53L8CX_RESOLUTION_4X4
+	depends on ST_VL53L8CX
+config ST_VL53L8CX_RESOLUTION_4X4
+		bool "4x4 zones (16 zones, max frequency 60Hz)"
+config ST_VL53L8CX_RESOLUTION_8X8
+		bool "8x8 zones (64 zones, max frequency 15Hz)"
+endchoice
+
+choice ST_VL53L8CX_MODE
+	prompt "VL53L8CX mode"
+	default ST_VL53L8CX_MODE_CONTINUOUS
+	depends on ST_VL53L8CX
+	config ST_VL53L8CX_MODE_CONTINUOUS
+		bool "Continuous mode, in this mode the device continuously grabs frames with a ranging frequency defined by user"
+	config ST_VL53L8CX_MODE_AUTONOMOUS
+		bool "Autonomous mode, the device continuously grabs frames with a ranging frequency defined by the user"
+endchoice
+
+config ST_VL53L8CX_RANGING_FREQUENCY
+	int "VL53L8CX ranging frequency (Hz)"
+	default 15
+	depends on ST_VL53L8CX
+	help
+	  Set the ranging frequency in Hz. The maximum frequency depends on the
+	  resolution and mode selected. The default is 15Hz.
+
+config ST_VL53L8CX_INTEGRATION_TIME
+	int "VL53L8CX integration time (ms)"
+	default 5
+	depends on ST_VL53L8CX
+	depends on ST_VL53L8CX_MODE_AUTONOMOUS
+	help
+	  Set the integration time in milliseconds, it should be lower than the ranging period plus 1ms. 
+	  For 8x8 resolution it takes 4 integration times plus the 1ms overhead. 
+	  The default is 5ms.
+
+choice ST_VL53L8CX_TARGET_ORDER
+	prompt "VL53L8CX target order"
+	default ST_VL53L8CX_TARGET_ORDER_STRONGEST
+	depends on ST_VL53L8CX
+config ST_VL53L8CX_TARGET_ORDER_STRONGEST
+		bool "Strongest target order"
+config ST_VL53L8CX_TARGET_ORDER_CLOSEST
+		bool "Closest target order"
+endchoice
+
+config ST_VL53L8CX_MOTION_DETECTION
+	bool "VL53L8CX motion detection"
+	default n
+	depends on ST_VL53L8CX
+	help
+	  Enable motion detection feature. The default is disabled.

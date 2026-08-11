@@ -1,0 +1,18 @@
+description: VL53L8CX time-of-flight distance sensor
+
+compatible: "st,vl53l8cx"
+
+include: [sensor-device.yaml, i2c-device.yaml]
+
+properties:
+  lpn-gpios:
+    type: phandle-array
+    description: |
+      Driving the LPN pin low puts the VL53L8CX into low power mode. The LPN pin is an optional pin that can be used to reduce power consumption when the sensor is not in use.
+
+  int-gpios:
+    type: phandle-array
+    description: |
+      An interrupt is raised when a distance measurement is ready.
+      GPIO1 is the interrupt pin on the VL53L1X (active low). This
+      can be disabled if the user prefers to use polling instead.

@@ -1,0 +1,6 @@
+zephyr_library()
+zephyr_include_directories(.)
+zephyr_include_directories(VL53L8_API/inc)
+zephyr_library_sources(VL53L8_API/src/vl53l8cx_api.c)
+zephyr_library_sources(st_vl53l8cx.c)
+zephyr_library_sources(platform.c)
