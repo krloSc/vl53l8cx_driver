@@ -25,7 +25,6 @@ struct st_vl53l8cx_config {
 static int st_vl53l8cx_sample_fetch(const struct device *dev,
                       enum sensor_channel chan)
 {
-    int64_t init_time = k_uptime_get();
     VL53L8CX_ResultsData results;
     uint8_t data_ready;
     uint8_t resolution;
@@ -73,7 +72,11 @@ static int st_vl53l8cx_sample_fetch(const struct device *dev,
 
         data->distance_matrix_mm[i] = distance_mm;
     }
-    data->distance_mm = results.distance_mm[0]; // save the distance of the first zone (top-left) for now
+#ifdef CONFIG_ST_VL53L8CX_RESOLUTION_8X8
+    data->distance_mm = results.distance_mm[VL53L8CX_RESOLUTION_8X8 / 2]; // save the distance of the center zone for 8x8 resolution
+#else
+    data->distance_mm = results.distance_mm[VL53L8CX_RESOLUTION_4X4 / 2]; // save the distance of the center zone for 4x4 resolution
+#endif
     return 0;
 }
 
