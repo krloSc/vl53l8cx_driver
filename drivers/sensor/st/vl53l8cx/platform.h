@@ -16,6 +16,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <zephyr/drivers/gpio.h>
 
 /**
  * @brief Structure VL53L8CX_Platform needs to be filled by the customer,
@@ -32,6 +33,8 @@ typedef struct
 	/* Example for most standard platform : I2C address of sensor */
 	const struct device *i2c_dev;
     uint16_t  			address;
+	const struct device *lpn;     // Pin de control LPN (Low Power Node)
+	gpio_pin_t lpn_pin;              // Pin de control LPN (Low Power Node)
 
 } VL53L8CX_Platform;
 

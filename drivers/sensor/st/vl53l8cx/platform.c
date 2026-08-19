@@ -12,7 +12,10 @@
 
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/i2c.h>
+#include <zephyr/logging/log.h>
 #include "platform.h"
+
+LOG_MODULE_REGISTER(st_vl53l8cx_platform, CONFIG_SENSOR_LOG_LEVEL);
 
 #define VL53L8CX_I2C_CHUNK_SIZE 1024U
 
@@ -74,7 +77,7 @@ uint8_t VL53L8CX_WrMulti(
 
         int ret = i2c_transfer(p_platform->i2c_dev, msgs, 2, p_platform->address);
         if (ret != 0) {
-            printf("WrMulti I2C error reg=0x%04X chunk=%u ret=%d\n", reg, (unsigned int)chunk, ret);
+            LOG_ERR("WrMulti I2C error reg=0x%04X chunk=%u ret=%d", reg, (unsigned int)chunk, ret);
             return 1;
         }
 
@@ -117,7 +120,7 @@ uint8_t VL53L8CX_RdMulti(
 
         int ret = i2c_transfer(p_platform->i2c_dev, msgs, 2, p_platform->address);
         if (ret != 0) {
-            printf("RdMulti I2C error reg=0x%04X chunk=%u ret=%d\n", reg, (unsigned int)chunk, ret);
+            LOG_ERR("RdMulti I2C error reg=0x%04X chunk=%u ret=%d", reg, (unsigned int)chunk, ret);
             return 1;
         }
 
@@ -130,23 +133,19 @@ uint8_t VL53L8CX_RdMulti(
 uint8_t VL53L8CX_Reset_Sensor(
 		VL53L8CX_Platform *p_platform)
 {
-	uint8_t status = 0;
-	
-	/* (Optional) Need to be implemented by customer. This function returns 0 if OK */
-	
-	/* Set pin LPN to LOW */
-	/* Set pin AVDD to LOW */
-	/* Set pin VDDIO  to LOW */
-	/* Set pin CORE_1V8 to LOW */
-	VL53L8CX_WaitMs(p_platform, 100);
+	if (p_platform == NULL) {
+        return 1;
+    }
 
-	/* Set pin LPN to HIGH */
-	/* Set pin AVDD to HIGH */
-	/* Set pin VDDIO to HIGH */
-	/* Set pin CORE_1V8 to HIGH */
-	VL53L8CX_WaitMs(p_platform, 100);
+    if (p_platform->lpn != NULL) {
+        gpio_pin_set(p_platform->lpn, p_platform->lpn_pin, 0);
+        VL53L8CX_WaitMs(p_platform, 100);
 
-	return status;
+        gpio_pin_set(p_platform->lpn, p_platform->lpn_pin, 1);
+        VL53L8CX_WaitMs(p_platform, 100);
+    }
+
+    return 0;
 }
 
 void VL53L8CX_SwapBuffer(

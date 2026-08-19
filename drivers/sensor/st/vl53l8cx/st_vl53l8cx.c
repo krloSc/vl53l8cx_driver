@@ -4,12 +4,12 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/sensor.h>
+#include <zephyr/drivers/gpio.h>
 #include "vl53l8cx_api.h"
 #include "st_vl53l8cx.h"
 #include "platform.h"
 
 #define DT_DRV_COMPAT st_vl53l8cx
-#define SPIOP	SPI_WORD_SET(8) | SPI_TRANSFER_MSB
 
 LOG_MODULE_REGISTER(st_vl53l8cx, CONFIG_SENSOR_LOG_LEVEL);
 
@@ -20,6 +20,8 @@ LOG_MODULE_REGISTER(st_vl53l8cx, CONFIG_SENSOR_LOG_LEVEL);
 
 struct st_vl53l8cx_config {
 	struct i2c_dt_spec i2c;
+    struct gpio_dt_spec lpn;
+    struct gpio_dt_spec int_gpio;
 };
 
 static int st_vl53l8cx_sample_fetch(const struct device *dev,
@@ -72,11 +74,30 @@ static int st_vl53l8cx_sample_fetch(const struct device *dev,
 
         data->distance_matrix_mm[i] = distance_mm;
     }
-#ifdef CONFIG_ST_VL53L8CX_RESOLUTION_8X8
-    data->distance_mm = results.distance_mm[VL53L8CX_RESOLUTION_8X8 / 2]; // save the distance of the center zone for 8x8 resolution
-#else
-    data->distance_mm = results.distance_mm[VL53L8CX_RESOLUTION_4X4 / 2]; // save the distance of the center zone for 4x4 resolution
-#endif
+
+    static const uint8_t center_indices_8x8[4] = {27U, 28U, 35U, 36U};
+    static const uint8_t center_indices_4x4[4] = {5U, 6U, 9U, 10U};
+    const uint8_t *center_indices = NULL;
+    uint32_t valid_sum = 0U;
+    uint8_t valid_count = 0U;
+
+    if (resolution == VL53L8CX_RESOLUTION_8X8) {
+        center_indices = center_indices_8x8;
+    } else {
+        center_indices = center_indices_4x4;
+    }
+
+    for (size_t i = 0U; i < 4U; i++) {
+        int16_t distance_mm = results.distance_mm[center_indices[i]];
+
+        /* Valid reading: > 0 and below the real sensor max (4 m = 4000 mm) */
+        if (distance_mm > 0 && distance_mm < 4000) {
+            valid_sum += (uint32_t)distance_mm;
+            valid_count++;
+        }
+    }
+
+    data->distance_mm = (valid_count > 0U) ? (int16_t)(valid_sum / valid_count) : 0;
     return 0;
 }
 
@@ -144,6 +165,15 @@ static int st_vl53l8cx_init(const struct device *dev)
     /* Maps the Zephyr I2C device to the ST driver platform structure */
     data->st_dev.platform.i2c_dev = config->i2c.bus;
     data->st_dev.platform.address = config->i2c.addr;
+    data->st_dev.platform.lpn = config->lpn.port;
+    data->st_dev.platform.lpn_pin = config->lpn.pin;
+
+    if (!gpio_is_ready_dt(&config->lpn)) {
+        LOG_ERR("LPN GPIO not ready");
+        return -ENODEV;
+    }
+
+    gpio_pin_configure_dt(&config->lpn, GPIO_OUTPUT_ACTIVE);
 
     /* Ping the sensor to check if it's alive */
     status = vl53l8cx_is_alive(&data->st_dev, &is_alive);
@@ -253,7 +283,9 @@ static int st_vl53l8cx_init(const struct device *dev)
 #define ST_VL53L8CX_DEFINE(inst)                                            \
     static struct st_vl53l8cx_data st_vl53l8cx_data_##inst;                 \
     static const struct st_vl53l8cx_config st_vl53l8cx_config_##inst = {    \
-        .i2c = I2C_DT_SPEC_INST_GET(inst),                           \
+        .i2c = I2C_DT_SPEC_INST_GET(inst),                                  \
+        .lpn = GPIO_DT_SPEC_INST_GET_OR(inst, lpn_gpios, {0}),              \
+        .int_gpio = GPIO_DT_SPEC_INST_GET_OR(inst, int_gpios, {0}),         \
     };                                                                      \
                                                                             \
     DEVICE_DT_INST_DEFINE(inst,                                             \
