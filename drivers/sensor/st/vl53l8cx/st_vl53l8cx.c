@@ -208,17 +208,16 @@ static int st_vl53l8cx_init(const struct device *dev)
 #endif
 
     if (status != 0) {
-        LOG_WRN("Failed to set VL53L8CX ranging mode");
+        LOG_ERR("Failed to set VL53L8CX ranging mode");
+        return -status;
     }
 
 
 #ifdef CONFIG_ST_VL53L8CX_MODE_AUTONOMOUS
-    if (status == 0) {
-        // Setting integration time according to configuration
-        status = vl53l8cx_set_integration_time_ms(&data->st_dev, CONFIG_ST_VL53L8CX_INTEGRATION_TIME);
-        if (status != 0) {
-            LOG_WRN("Failed to set VL53L8CX integration time to %d ms", CONFIG_ST_VL53L8CX_INTEGRATION_TIME);
-        }
+    // Setting integration time according to configuration
+    status = vl53l8cx_set_integration_time_ms(&data->st_dev, CONFIG_ST_VL53L8CX_INTEGRATION_TIME);
+    if (status != 0) {
+        LOG_WRN("Failed to set VL53L8CX integration time to %d ms", CONFIG_ST_VL53L8CX_INTEGRATION_TIME);
     }
 #endif
 
@@ -227,6 +226,27 @@ static int st_vl53l8cx_init(const struct device *dev)
     if (status != 0) {
         LOG_WRN("Failed to set VL53L8CX ranging frequency to %d Hz", CONFIG_ST_VL53L8CX_RANGING_FREQUENCY);
     }
+
+#ifdef CONFIG_ST_VL53L8CX_TARGET_ORDER_STRONGEST
+    // Setting target order to strongest
+    status = vl53l8cx_set_target_order(&data->st_dev, VL53L8CX_TARGET_ORDER_STRONGEST);
+    if (status != 0) {
+        LOG_WRN("Failed to set VL53L8CX target order to strongest");
+    }
+#else
+    // Setting target order to closest
+    status = vl53l8cx_set_target_order(&data->st_dev, VL53L8CX_TARGET_ORDER_CLOSEST);
+    if (status != 0) {
+        LOG_WRN("Failed to set VL53L8CX target order to closest");
+    }
+#endif
+
+    /*#####################################################################
+    ###     Verify if the configurations were applied correctly         ###
+    ###                                                                 ###
+    ### Note: Since this configurations are not critical for the sensor ###
+    ### operation, we will not return an error if they fail.            ###
+    #####################################################################*/
 
     // Getting the current ranging mode
     status = vl53l8cx_get_ranging_mode(&data->st_dev, &ranging_mode);
@@ -244,20 +264,6 @@ static int st_vl53l8cx_init(const struct device *dev)
         LOG_WRN("Failed to get VL53L8CX integration time");
     } else {
         LOG_DBG("VL53L8CX integration time: %d ms", integration_time_ms);
-    }
-#endif
-
-#ifdef CONFIG_ST_VL53L8CX_TARGET_ORDER_STRONGEST
-    // Setting target order to strongest
-    status = vl53l8cx_set_target_order(&data->st_dev, VL53L8CX_TARGET_ORDER_STRONGEST);
-    if (status != 0) {
-        LOG_WRN("Failed to set VL53L8CX target order to strongest");
-    }
-#else
-    // Setting target order to closest
-    status = vl53l8cx_set_target_order(&data->st_dev, VL53L8CX_TARGET_ORDER_CLOSEST);
-    if (status != 0) {
-        LOG_WRN("Failed to set VL53L8CX target order to closest");
     }
 #endif
 
