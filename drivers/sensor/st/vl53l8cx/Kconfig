@@ -53,10 +53,3 @@ config ST_VL53L8CX_TARGET_ORDER_STRONGEST
 config ST_VL53L8CX_TARGET_ORDER_CLOSEST
 		bool "Closest target order"
 endchoice
-
-config ST_VL53L8CX_MOTION_DETECTION
-	bool "VL53L8CX motion detection"
-	default n
-	depends on ST_VL53L8CX
-	help
-	  Enable motion detection feature. The default is disabled.

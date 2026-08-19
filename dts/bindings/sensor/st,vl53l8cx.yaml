@@ -14,5 +14,5 @@ properties:
     type: phandle-array
     description: |
       An interrupt is raised when a distance measurement is ready.
-      GPIO1 is the interrupt pin on the VL53L1X (active low). This
+      GPIO1 is the interrupt pin on the VL53L8CX (active low). This
       can be disabled if the user prefers to use polling instead.
