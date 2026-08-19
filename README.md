@@ -17,6 +17,24 @@ Current behavior:
 - Exposes full distance matrix through:
   - `int vl53l8cx_get_distance_matrix(const struct device *dev, uint16_t *matrix);`
 
+## Object Detection Capture
+
+The following capture shows an object passing in front of the sensor in 8x8 mode. Each cell represents a distance measurement in millimeters.
+
+![VL53L8CX distance capture](docs/capture.gif)
+
+## Configuration Parameters
+
+| Parameter | Possible values | Description |
+| --- | --- | --- |
+| Resolution | 4x4 or 8x8 zones | 4x4 provides 16 zones; 8x8 provides 64 zones. |
+| Maximum continuous ranging frequency | 60 Hz (4x4); 15 Hz (8x8) | The maximum frequency depends on the selected resolution. |
+| Ranging mode | Continuous or autonomous | Continuous mode continuously acquires frames; autonomous mode also supports integration-time configuration. |
+| Ranging frequency | Configurable in Hz, up to the resolution-dependent maximum | Configure with `CONFIG_ST_VL53L8CX_RANGING_FREQUENCY`. |
+| Integration time | Configurable in milliseconds | Applies to autonomous mode; configure with `CONFIG_ST_VL53L8CX_INTEGRATION_TIME`. |
+| Target order | Strongest or closest | Select which target is reported by the sensor API. |
+| Host interface | I2C | I2C is currently supported. SPI support is planned for a future update. |
+
 ## Add This Driver to a Zephyr Project
 
 This repository is module-based, so integration is straightforward.
